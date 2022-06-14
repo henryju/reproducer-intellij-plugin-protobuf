@@ -5,6 +5,8 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.PsiErrorElementUtil
+import junit.framework.TestCase
+import org.example.proto.Example.MyMessages
 
 @TestDataPath("\$CONTENT_ROOT/src/test/testData")
 class MyPluginTest : BasePlatformTestCase() {
@@ -27,5 +29,13 @@ class MyPluginTest : BasePlatformTestCase() {
 
     fun testRename() {
         myFixture.testRename("foo.xml", "foo_after.xml", "a2")
+    }
+
+    fun testProto() {
+        val messages = MyMessages.newBuilder()
+            .addMsg(MyMessages.MyMessage.newBuilder()
+                .setValue("A value"))
+            .build()
+        assertEquals(1, messages.msgCount)
     }
 }

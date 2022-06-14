@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package example.proto;
+
+// The java package can be changed without breaking compatibility.
+// it impacts only the generated Java code.
+option java_package = "org.example.proto";
+option optimize_for = SPEED;
+
+message MyMessages {
+    repeated MyMessage msg = 1;
+
+    message MyMessage {
+        string value = 1;
+    }
+}

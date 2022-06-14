@@ -1,15 +1,18 @@
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
 
 fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
+    id("com.google.protobuf") version "0.8.18"
     // Java support
     id("java")
     // Kotlin support
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.4.0"
+    id("org.jetbrains.intellij") version "1.6.0"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "1.3.1"
     // Gradle Qodana Plugin
@@ -46,6 +49,32 @@ qodana {
     reportPath.set(projectDir.resolve("build/reports/inspections").canonicalPath)
     saveReport.set(true)
     showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
+}
+
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        artifact = "com.google.protobuf:protoc:" + properties("protobufVersion")
+    }
+}
+
+configurations {
+    all {
+        // Allows using project dependencies instead of IDE dependencies during compilation and test running
+        resolutionStrategy {
+            sortArtifacts(ResolutionStrategy.SortOrder.DEPENDENCY_FIRST)
+        }
+    }
+}
+
+dependencies {
+    implementation("com.google.protobuf:protobuf-java:" + properties("protobufVersion"))
+}
+
+// Workaround to make this visible to Kotlin tests
+// https://github.com/google/protobuf-gradle-plugin/issues/474
+java.sourceSets["main"].java {
+    srcDir("${protobuf.protobuf.generatedFilesBaseDir}/main/java")
 }
 
 tasks {
@@ -112,5 +141,9 @@ tasks {
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
+    }
+
+    compileKotlin {
+        dependsOn("generateProto")
     }
 }
